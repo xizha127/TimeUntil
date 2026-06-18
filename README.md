@@ -59,7 +59,7 @@ These settings are available:
 
 - **Target Date** - Date to count down to, in the format `<YYYY>-<MM>-<DD> <hh>:<mm>`, for example `2026-04-10 21:37`.
   Time component is optional and defaults to midnight if omitted.
-- **Unit** - Whether to use hours, days, weeks, or months. Default: days.
+- **Unit** - Whether to use hours, days, days + hours + minutes, weeks, or months. Default: days.
 - **Label** - Text to show after the units. Default: "remaining". Changes to "overdue" when the target date is in the past.
 
 ## Usage

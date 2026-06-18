@@ -2,7 +2,7 @@
   "id": "timeUntil",
   "name": "Time Until",
   "description": "Display remaining time until a chosen date in the bar.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "fdmarcin",
   "icon": "schedule",
   "type": "widget",

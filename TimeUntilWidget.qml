@@ -6,6 +6,7 @@ import qs.Modules.Plugins
 
 PluginComponent {
     id: root
+    property var popoutService: null
 
     layerNamespacePlugin: "timeUntil"
 
@@ -15,20 +16,23 @@ PluginComponent {
     property string label: pluginData.label || ""
 
     property real value: 0
+    property real remainingMs: NaN
 
     function recalc() {
         if (!targetTimestamp) {
             value = NaN
+            remainingMs = NaN
             return
         }
 
         const target = new Date(targetTimestamp.replace("T", " "))
         if (isNaN(target.getTime())) {
             value = NaN
+            remainingMs = NaN
             return
         }
         const now = new Date()
-        let diffMs = target.getTime() - now.getTime()
+        remainingMs = target.getTime() - now.getTime()
 
         let divisor
         switch (unit) {
@@ -36,20 +40,52 @@ PluginComponent {
         case "days": divisor = 1000 * 60 * 60 * 24; break
         case "weeks": divisor = 1000 * 60 * 60 * 24 * 7; break
         case "months": divisor = 1000 * 60 * 60 * 24 * 30.44; break
+        case "daysHoursMinutes": divisor = 1000 * 60; break
         default: divisor = 1000 * 60 * 60 * 24
         }
 
-        if (diffMs < 0) {
-            const raw = Math.abs(diffMs) / divisor
+        if (remainingMs < 0) {
+            const raw = Math.abs(remainingMs) / divisor
             value = -(Math.round(raw * 10) / 10)
             return
         }
 
-        const raw = diffMs / divisor
+        const raw = remainingMs / divisor
         value = Math.round(raw * 10) / 10
     }
 
+    function pluralize(count, singular, plural) {
+        return count === 1 ? singular : plural
+    }
+
+    function breakdownText(shortFormat) {
+        if (isNaN(remainingMs)) {
+            if (shortFormat)
+                return targetTimestamp ? "!date" : "—"
+            return targetTimestamp ? "Invalid date" : "No date set"
+        }
+
+        let totalMinutes = Math.floor(Math.abs(remainingMs) / (1000 * 60))
+        const days = Math.floor(totalMinutes / (60 * 24))
+        totalMinutes = totalMinutes - days * 60 * 24
+        const hours = Math.floor(totalMinutes / 60)
+        const minutes = totalMinutes - hours * 60
+
+        if (shortFormat) {
+            const suffix = remainingMs < 0 ? "!" : ""
+            return days + "d " + hours + "h " + minutes + "m" + suffix
+        }
+
+        const effectiveLabel = remainingMs < 0 ? "overdue" : (label && label.trim().length > 0 ? label.trim() : "remaining")
+        return days + " " + pluralize(days, "day", "days") + " "
+            + hours + " " + pluralize(hours, "hour", "hours") + " "
+            + minutes + " " + pluralize(minutes, "minute", "minutes") + " "
+            + effectiveLabel
+    }
+
     function displayText() {
+        if (unit === "daysHoursMinutes")
+            return breakdownText(false)
         if (isNaN(value))
             return targetTimestamp ? "Invalid date" : "No date set"
         const absValue = Math.abs(value)
@@ -65,11 +101,14 @@ PluginComponent {
         case "days": return "d"
         case "weeks": return "w"
         case "months": return "mo"
+        case "daysHoursMinutes": return "m"
         default: return "d"
         }
     }
 
     function displayTextShort() {
+        if (unit === "daysHoursMinutes")
+            return breakdownText(true)
         if (isNaN(value))
             return targetTimestamp ? "!date" : "—"
         const absValue = Math.abs(value)
@@ -87,6 +126,7 @@ PluginComponent {
         interval: {
             switch (root.unit) {
             case "hours": return 1000 * 60 * 6        // 0.1 hour
+            case "daysHoursMinutes": return 1000 * 60 // 1 minute
             case "days": return 1000 * 60 * 60 * 2.4  // 0.1 day
             case "weeks": return 1000 * 60 * 60 * 24  // 1 day
             case "months": return 1000 * 60 * 60 * 24 // 1 day

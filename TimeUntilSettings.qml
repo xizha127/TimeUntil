@@ -17,6 +17,7 @@ PluginSettings {
         options: [
             { label: "Hours", value: "hours" },
             { label: "Days", value: "days" },
+            { label: "Days + Hours + Minutes", value: "daysHoursMinutes" },
             { label: "Weeks", value: "weeks" },
             { label: "Months", value: "months" }
         ]
